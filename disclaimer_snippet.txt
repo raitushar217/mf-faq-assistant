@@ -1,0 +1,6 @@
+Facts only. No investment advice.
+This assistant answers factual questions about HDFC Mutual Fund schemes only.
+All information is sourced exclusively from official public pages (AMC, AMFI, SEBI).
+This tool does not provide investment recommendations, return predictions, or portfolio advice.
+Consult a SEBI-registered investment advisor before making any financial decisions.
+Data is refreshed daily from public sources.
