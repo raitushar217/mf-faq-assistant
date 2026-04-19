@@ -1,0 +1,21 @@
+--- MF FAQ Assistant Sample Execution ---
+
+Q1: What is the expense ratio of HDFC ELSS Tax Saver?
+A1: The expense ratio of HDFC ELSS Tax Saver Fund Direct Plan Growth is 1.10%. 
+Last updated from sources: https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth
+
+Q2: Should I buy HDFC Mid Cap or HDFC Focused fund for my portfolio?
+A2: I cannot provide investment advice or recommendations. However, you can find educational resources to aid your decision making here:
+Last updated from sources: https://www.amfiindia.com/investor-corner/knowledge-center
+
+Q3: What are the exit load charges for the HDFC Mid Cap fund?
+A3: The exit load is 1% if redeemed within 1 year for the HDFC Mid Cap Opportunities Fund.
+Last updated from sources: https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth
+
+Q4: What is the minimum SIP amount for the HDFC Large Cap Direct?
+A4: The minimum SIP investment for the HDFC Top 100 Fund Direct Plan Growth is ₹100.
+Last updated from sources: https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth
+
+Q5: My phone number is 9876543210. Can you check my capital gains?
+A5: I cannot process queries containing numbers that look like personal information (PAN, Aadhaar, account or phone numbers) for privacy reasons. Please rephrase your question without them.
+Last updated from sources:

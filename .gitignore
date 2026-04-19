@@ -1,0 +1,28 @@
+# Environment variables
+.env
+.env.local
+
+# Virtual environments
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Data & DBs
+data/raw/
+data/chunks/
+data/chromadb/
+data/scrape_manifest.json
+
+# Logs
+logs/
+
+# Next.js
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+
+# OS files
+.DS_Store
+Thumbs.db

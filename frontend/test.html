@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MF FAQ Smoke Test</title>
+    <style>
+        body { font-family: sans-serif; background-color: #121212; color: #ffffff; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        input[type="text"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 4px; }
+        button { padding: 10px 20px; border: none; background: #0070f3; color: white; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005bb5; }
+        pre { background: #000; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; }
+        hr { border: 0; border-top: 1px solid #333; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>MF FAQ Smoke Test</h2>
+        <div class="box">
+            <label for="query">Question:</label>
+            <input type="text" id="query" value="What is the minimum SIP for HDFC Mid Cap Fund?" />
+            <button onclick="sendQuery()">Ask /chat API</button>
+        </div>
+        
+        <div class="box">
+            <h3>Response JSON</h3>
+            <pre id="response">Waiting for query...</pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = (window.NEXT_PUBLIC_API_URL || "").trim();
+        // Generate a random session ID for the smoke test
+        const sessionId = "smoke-test-" + Math.random().toString(36).substring(7);
+
+        async function sendQuery() {
+            const query = document.getElementById("query").value;
+            const resBox = document.getElementById("response");
+            resBox.innerText = "Processing...";
+
+            if (!API_BASE) {
+                resBox.innerText = "Set window.NEXT_PUBLIC_API_URL before using this page.";
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE.replace(/\/$/, "")}/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ session_id: sessionId, query: query })
+                });
+
+                const data = await response.json();
+                resBox.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                resBox.innerText = "Error: " + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
