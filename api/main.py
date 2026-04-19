@@ -38,16 +38,9 @@ class ChatResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load latest local ChromaDB from GitHub artifact before serving.
-    print("Executing artifact download at startup...")
-    try:
-        exit_code = download_artifact()
-        if exit_code != 0:
-            raise RuntimeError(f"Artifact download failed with exit code {exit_code}")
-    except Exception as e:
-        print(f"Startup artifact download error: {e}")
-        raise
-        
+    # Note: On Render, ChromaDB artifacts are downloaded in the startCommand 
+    # BEFORE the server process starts to avoid file locks.
+    print("FastAPI server starting up...")
     yield
     # Cleanup if necessary
 
