@@ -11,7 +11,8 @@ playwright==1.44.0
 # ---------------------------------------------------------------------------
 # Vector Store (Lean - uses ONNX for default embeddings)
 # ---------------------------------------------------------------------------
-chromadb==0.4.22
+chromadb==0.5.23
+numpy==1.26.4
 onnxruntime==1.17.1          # Required for Chroma's default embedding function
 
 # ---------------------------------------------------------------------------
