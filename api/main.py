@@ -63,7 +63,7 @@ app.add_middleware(
 )
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest):
+def chat_endpoint(request: ChatRequest):
     query = request.query.strip()
     session_id = request.session_id
     
@@ -102,6 +102,7 @@ async def chat_endpoint(request: ChatRequest):
         session_id=session_id
     )
 
+@app.get("/")
 @app.get("/health")
-async def health_check():
+def health_check():
     return {"status": "ok"}
