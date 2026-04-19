@@ -18,7 +18,12 @@ Ensure you are using Python 3.11+ and Node.js 18+.
 
 ### 2. Backend Setup
 ```bash
+# For local ingestion (heavy dependencies like torch)
+pip install -r requirements-ingest.txt
+
+# For running only the backend (lean dependencies for Render)
 pip install -r requirements.txt
+
 playwright install chromium
 
 # Create the .env file with your API Keys (see .env.example)

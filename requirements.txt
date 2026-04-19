@@ -1,34 +1,24 @@
 # MF FAQ Assistant — requirements.txt
-# Versions pinned as specified in architecture.md
-# Install: pip install -r requirements.txt
-# After install: playwright install chromium
+# Lean dependencies for Render (FastAPI Backend + Retrieval)
+# Stay under 512MB RAM by avoiding torch/sentence-transformers.
 
 # ---------------------------------------------------------------------------
-# Phase 4.0 — Scraping
+# Scraping & Core
 # ---------------------------------------------------------------------------
-requests==2.31.0            # non-Groww URLs (AMFI, SEBI, HDFC, CAMS, etc.)
-playwright==1.44.0          # Groww URLs (headless Chromium, networkidle)
+requests==2.31.0
+playwright==1.44.0
 
 # ---------------------------------------------------------------------------
-# Phase 4.2 / 4.3 — Embedding + Vector Store
+# Vector Store (Lean - uses ONNX for default embeddings)
 # ---------------------------------------------------------------------------
-sentence-transformers==2.6.1  # BAAI/bge-small-en-v1.5 — NEVER substitute
-chromadb==0.5.23              # local PersistentClient only — no Chroma Cloud
-                              # (0.5.x: pre-built wheel for Python 3.12/Windows)
+chromadb==0.4.22
+onnxruntime==1.17.1          # Required for Chroma's default embedding function
 
 # ---------------------------------------------------------------------------
-# Phase 6 — LLM Generation
+# API & LLM
 # ---------------------------------------------------------------------------
-groq==0.9.0                 # Groq API client (llama3-8b-8192)
-
-# ---------------------------------------------------------------------------
-# Phase 8 — FastAPI Backend
-# ---------------------------------------------------------------------------
-fastapi==0.111.0            # async REST API (/chat, /health)
-uvicorn==0.30.0             # ASGI server (startup: download_artifact + serve)
-
-# ---------------------------------------------------------------------------
-# Shared utilities
-# ---------------------------------------------------------------------------
-python-dotenv==1.0.1        # loads .env → GROQ_API_KEY, CHROMA_PERSIST_DIR, etc.
-httpx==0.27.2               # groq==0.9.0 compatibility (0.28+ breaks proxies arg)
+groq==0.9.0
+fastapi==0.111.0
+uvicorn==0.30.0
+python-dotenv==1.0.1
+httpx==0.27.2               # Required by groq client

@@ -1,0 +1,11 @@
+# MF FAQ Assistant — requirements-ingest.txt
+# Heavy dependencies for local ingestion and embedding.
+# Use this for Phase 4 (Scraping, Chunking, Embedding).
+
+sentence-transformers==2.6.1
+torch==2.2.1+cpu
+transformers==4.38.2
+tokenizers==0.15.2
+
+# Also include basic requirements
+-r requirements.txt

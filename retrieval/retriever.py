@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 import chromadb
-from sentence_transformers import SentenceTransformer
+from chromadb.utils import embedding_functions
 
 # ---------------------------------------------------------------------------
 # Paths and configuration
@@ -19,25 +19,15 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 CHROMA_PATH = os.getenv("CHROMA_PERSIST_DIR", str(ROOT_DIR / "data" / "chromadb"))
 COLLECTION_NAME = "mf_faq"
 
-# Load the embedding model ONCE at module level
-print("Loading embedding model BAAI/bge-small-en-v1.5 for retrieval...")
-try:
-    MODEL = SentenceTransformer("BAAI/bge-small-en-v1.5")
-    # Pre-ping ChromaDB on load to avoid cold start issues
-    _client = chromadb.PersistentClient(path=CHROMA_PATH)
-except Exception as e:
-    print(f"Warning: Failed to initialize retrieval dependencies during module load: {e}")
-    MODEL = None
-
+# Using the same DefaultEmbeddingFunction as used during ingest.
+# This runs via ONNX and does not require torch/sentence-transformers.
+EMBEDDING_FUNCTION = embedding_functions.DefaultEmbeddingFunction()
 
 def retrieve(query: str, n_results: int = 3) -> list[dict]:
     """
     Returns [{"text": str, "source_url": str, "score": float}]
     sorted by score descending.
     """
-    if MODEL is None:
-        return []
-
     try:
         client = chromadb.PersistentClient(path=CHROMA_PATH)
     except Exception as e:
@@ -49,17 +39,16 @@ def retrieve(query: str, n_results: int = 3) -> list[dict]:
         print(f"Collection '{COLLECTION_NAME}' not found. Returning empty.")
         return []
 
-    collection = client.get_collection(COLLECTION_NAME)
+    # Load collection with the corresponding embedding function
+    collection = client.get_collection(
+        name=COLLECTION_NAME,
+        embedding_function=EMBEDDING_FUNCTION
+    )
 
     try:
-        query_embedding = MODEL.encode(query, normalize_embeddings=True).tolist()
-    except Exception as e:
-        print(f"Error encoding query: {e}")
-        return []
-
-    try:
+        # Chroma handles embedding internally when query_texts is used
         results = collection.query(
-            query_embeddings=[query_embedding],
+            query_texts=[query],
             n_results=n_results,
             include=["documents", "metadatas", "distances"]
         )
@@ -77,7 +66,8 @@ def retrieve(query: str, n_results: int = 3) -> list[dict]:
 
     retrieved = []
     for doc, meta, dist in zip(docs, metas, dists):
-        score = 1.0 - dist  # ChromaDB uses L2 distance; since normalized, L2 is proportional to cosine distance
+        # ChromaDB uses L2 distance; since normalized, L2 is proportional to cosine distance
+        score = 1.0 - dist
         retrieved.append({
             "text": doc,
             "source_url": meta.get("source_url", ""),

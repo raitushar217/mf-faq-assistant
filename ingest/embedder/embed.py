@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 import chromadb
-from sentence_transformers import SentenceTransformer
+from chromadb.utils import embedding_functions
 
 # ---------------------------------------------------------------------------
 # Paths and configuration
@@ -26,6 +26,10 @@ CHUNKS_DIR = ROOT_DIR / "data" / "chunks"
 CHROMA_PATH = os.getenv("CHROMA_PERSIST_DIR", str(ROOT_DIR / "data" / "chromadb"))
 COLLECTION_NAME = "mf_faq"
 
+# Use Chroma's default embedding function (all-MiniLM-L6-v2)
+# This is torch-free and uses onnxruntime, which is much lighter for Render.
+EMBEDDING_FUNCTION = embedding_functions.DefaultEmbeddingFunction()
+
 from datetime import datetime, timezone
 LOGS_DIR = ROOT_DIR / "logs"
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -36,17 +40,6 @@ def _log(message: str) -> None:
     print(line)
     with open(LOGS_DIR / "scheduler.log", "a", encoding="utf-8") as fh:
         fh.write(line + "\n")
-
-# Load the embedding model ONCE at module level
-_log("Loading embedding model BAAI/bge-small-en-v1.5...")
-MODEL = SentenceTransformer("BAAI/bge-small-en-v1.5")
-
-
-def embed_chunks(texts: list[str]) -> list[list[float]]:
-    """Embed a list of text strings into 384-dim normalized vectors."""
-    # normalize_embeddings=True projects vectors to unit sphere for cosine similarity via L2
-    return MODEL.encode(texts, normalize_embeddings=True).tolist()
-
 
 def run() -> None:
     _log("=== embed.py START ===")
@@ -60,10 +53,9 @@ def run() -> None:
     for filepath in CHUNKS_DIR.glob("*_chunks.json"):
         with open(filepath, "r", encoding="utf-8") as f:
             file_chunks = json.load(f)
-            # The dictionary needs to track the slug to form the ID
             slug = filepath.name.replace("_chunks.json", "")
             for c in file_chunks:
-                c["_slug"] = slug  # temporary key for ID generation
+                c["_slug"] = slug
             all_chunks.extend(file_chunks)
 
     if not all_chunks:
@@ -72,22 +64,16 @@ def run() -> None:
 
     _log(f"Loaded {len(all_chunks)} total chunks from JSON files.")
 
-    # 2. Extract texts and generate embeddings
-    texts = [c["text"] for c in all_chunks]
-    _log(f"Embedding {len(texts)} chunks...")
-    embeddings = embed_chunks(texts)
-
-    # 3. Format data for ChromaDB
+    # 2. Format data for ChromaDB
     ids = []
     documents = []
     metadatas = []
 
-    for chunk, emb in zip(all_chunks, embeddings):
+    for chunk in all_chunks:
         chunk_id = f"{chunk['_slug']}_chunk{chunk['chunk_index']}"
         ids.append(chunk_id)
         documents.append(chunk["text"])
 
-        # Metadatas cannot contain complex objects, but ours are simple strings/ints
         metadata = {
             "source_url": chunk["source_url"],
             "filename": chunk["filename"],
@@ -96,7 +82,7 @@ def run() -> None:
         }
         metadatas.append(metadata)
 
-    # 4. Initialize Local ChromaDB
+    # 3. Initialize Local ChromaDB
     _log(f"Connecting to Local ChromaDB at {CHROMA_PATH}...")
     client = chromadb.PersistentClient(path=CHROMA_PATH)
 
@@ -106,18 +92,21 @@ def run() -> None:
         _log(f"Deleting existing collection '{COLLECTION_NAME}'...")
         client.delete_collection(COLLECTION_NAME)
 
-    _log(f"Creating new collection '{COLLECTION_NAME}'...")
-    collection = client.create_collection(COLLECTION_NAME)
+    _log(f"Creating new collection '{COLLECTION_NAME}' with built-in embedding function...")
+    collection = client.create_collection(
+        name=COLLECTION_NAME,
+        embedding_function=EMBEDDING_FUNCTION
+    )
 
-    # Note: Chroma recommends batching if there are >41666 items (sqlite limit).
-    # Since we have ~20 URLs, chunks will be < 500, so adding in one batch is completely safe.
-    _log(f"Adding {len(ids)} embedded chunks to ChromaDB...")
+    # 4. Add documents (Chroma handles embedding automatically)
+    _log(f"Adding {len(ids)} chunks to ChromaDB (embedding in progress)...")
     collection.add(
         ids=ids,
         documents=documents,
-        embeddings=embeddings,
         metadatas=metadatas
     )
+
+    _log(f"=== embed.py DONE — Embedded {len(ids)} chunks total ===")
 
     _log(f"=== embed.py DONE — Embedded {len(ids)} chunks total ===")
 
