@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mf-faq-backend
+    env: python
+    buildCommand: "pip install -r requirements.txt && playwright install chromium"
+    startCommand: "python scripts/download_artifact.py && uvicorn api.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: GITHUB_REPO
+        value: raitushar217/mf-faq-assistant
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
