@@ -23,7 +23,7 @@ COLLECTION_NAME = "mf_faq"
 # This runs via ONNX and does not require torch/sentence-transformers.
 EMBEDDING_FUNCTION = embedding_functions.DefaultEmbeddingFunction()
 
-def retrieve(query: str, n_results: int = 3) -> list[dict]:
+def retrieve(query: str, n_results: int = 5) -> list[dict]:
     """
     Returns [{"text": str, "source_url": str, "score": float}]
     sorted by score descending.

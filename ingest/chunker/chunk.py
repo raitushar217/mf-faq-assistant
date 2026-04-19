@@ -22,16 +22,30 @@ CHUNKS_DIR = ROOT_DIR / "data" / "chunks"
 MANIFEST_PATH = ROOT_DIR / "data" / "scrape_manifest.json"
 
 CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
-
-CHUNK_SIZE = 300
-OVERLAP = 50
-MIN_CHUNK = 20
-STRIDE = CHUNK_SIZE - OVERLAP
-
-from datetime import datetime, timezone
-
 LOGS_DIR = ROOT_DIR / "logs"
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+CHUNK_SIZE = 100
+OVERLAP = 20
+MIN_CHUNK = 10
+STRIDE = CHUNK_SIZE - OVERLAP
+
+def _clean_text(text: str) -> str:
+    """Remove UI noise like single-digit lines and excessive whitespace."""
+    lines = text.splitlines()
+    cleaned_lines = []
+    for line in lines:
+        stripped = line.strip()
+        # Skip lines that are just numbers (0-9) or very short navigational noise
+        if stripped.isdigit() and len(stripped) < 3:
+            continue
+        if stripped in ["+", "-", "%", ".", "Stocks", "F&O", "Mutual Funds", "More", "Search Groww....", "Ctrl+K"]:
+            continue
+        if stripped:
+            cleaned_lines.append(stripped)
+    return " ".join(cleaned_lines)
+
+from datetime import datetime, timezone
 
 def _log(message: str) -> None:
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -56,8 +70,12 @@ def chunk_file(filepath: Path, manifest_data: dict) -> list[dict]:
     source_url = file_info.get("url", "unknown")
     scraped_at = file_info.get("scraped_at", "unknown")
     
-    text = filepath.read_text(encoding="utf-8")
-    words = text.split()
+    # Try to extract a clean fund name from the slug for context injection
+    fund_name = slug.replace("mutual-funds_", "").replace("-", " ").title()
+    
+    raw_text = filepath.read_text(encoding="utf-8")
+    cleaned_text = _clean_text(raw_text)
+    words = cleaned_text.split()
     
     chunks = []
     i = 0
@@ -69,7 +87,10 @@ def chunk_file(filepath: Path, manifest_data: dict) -> list[dict]:
         if len(window) < MIN_CHUNK:
             break
             
-        chunk_text = " ".join(window)
+        # Context Injection: Prepend the fund name to each chunk's text
+        # This helps the retriever match queries that use the fund name.
+        chunk_text = f"[{fund_name}] " + " ".join(window)
+        
         chunks.append({
             "text": chunk_text,
             "source_url": source_url,
@@ -84,7 +105,7 @@ def chunk_file(filepath: Path, manifest_data: dict) -> list[dict]:
     return chunks
 
 def run():
-    _log("=== chunk.py START ===")
+    _log("=== chunk.py START (Refined Chunking) ===")
     
     if not RAW_DIR.exists():
         _log(f"Directory not found: {RAW_DIR}")
